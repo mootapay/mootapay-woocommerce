@@ -1,0 +1,16 @@
+{
+    "name": "moota/woocommerce-gateway-moota",
+    "description": "Terima Pembayaran Langsung Ke Rekening Anda, Tanpa Potongan Per Transaksi Dan Dana Mengendap",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rezza Kurniawan",
+            "email": "rezza.kurniawan@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "mootaco/moota-php-sdk": "1.*"
+    }
+}
