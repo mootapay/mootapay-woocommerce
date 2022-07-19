@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Spatie\DataTransferObject;
 
 use ArrayAccess;
@@ -34,22 +32,59 @@ class Arr
                 continue;
             }
 
-            $parts = explode('.', $key);
-
-            while (count($parts) > 1) {
-                $part = array_shift($parts);
-
-                if (isset($array[$part]) && is_array($array[$part])) {
-                    $array = &$array[$part];
-                } else {
-                    continue 2;
-                }
+            // Check if the key is using dot-notation
+            if (! str_contains($key, '.')) {
+                continue;
             }
 
-            unset($array[array_shift($parts)]);
+            // If we are dealing with dot-notation, recursively handle i
+            $parts = explode('.', $key);
+            $key = array_shift($parts);
+
+            if (static::exists($array, $key) && static::accessible($array[$key])) {
+                $array[$key] = static::forget($array[$key], implode('.', $parts));
+
+                if (count($array[$key]) === 0) {
+                    unset($array[$key]);
+                }
+            }
         }
 
         return $array;
+    }
+
+    public static function get($array, $key, $default = null)
+    {
+        if (! static::accessible($array)) {
+            return $default;
+        }
+
+        if (is_null($key)) {
+            return $array;
+        }
+
+        if (static::exists($array, $key)) {
+            return $array[$key];
+        }
+
+        if (strpos($key, '.') === false) {
+            return $array[$key] ?? $default;
+        }
+
+        foreach (explode('.', $key) as $segment) {
+            if (static::accessible($array) && static::exists($array, $segment)) {
+                $array = $array[$segment];
+            } else {
+                return $default;
+            }
+        }
+
+        return $array;
+    }
+
+    public static function accessible($value)
+    {
+        return is_array($value) || $value instanceof ArrayAccess;
     }
 
     public static function exists($array, $key): bool
