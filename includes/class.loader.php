@@ -13,8 +13,13 @@ class Moota_Loader {
 		register_deactivation_hook( MOOTA_FULL_PATH, [ $this, 'deactivation_plugins' ] );
 
 		add_filter( 'woocommerce_payment_gateways', [ $this, 'add_moota_gateway_class' ] );
+
 	}
 
+    public function add_setting_page($settings) {
+        $settings[] = 'WC_Moota_Advanced';
+        return $settings;
+    }
 	public static function init() {
 		if ( ! self::$init instanceof self ) {
 			self::$init = new self();
@@ -31,19 +36,22 @@ class Moota_Loader {
 	}
 
 	public function onload() {
-		if ( class_exists( 'WC_Payment_Gateway' ) ) {
+		if ( class_exists( 'WooCommerce' ) ) {
+			require_once MOOTA_PAYMENT_METHOD . '/class.moota-advanced.php';
 			require_once MOOTA_PAYMENT_METHOD . '/class.moota-bank-transfer.php';
+			require_once MOOTA_PAYMENT_METHOD . '/class.moota-escrow.php';
 		} else {
 			add_action( 'admin_notices', function () {
 				?>
                 <div class="notice notice-error is-dismissible">
-                    <p><?php esc_html__( 'Error! class <b>WC_Payment_Gateway</b>not found', 'moota' ); ?></p>
+                    <p><?php esc_html__( 'Error! class <b>WooCommerce</b>not found', 'moota' ); ?></p>
                 </div>
 				<?php
 			} );
 		}
 
         add_action('wp_enqueue_scripts', [$this, 'front_end_scripts']);
+
 	}
 
 	/**
@@ -53,6 +61,7 @@ class Moota_Loader {
 	 */
 	public function add_moota_gateway_class( $methods ) {
 		$methods[] = 'WC_Moota_Bank_Transfer';
+		$methods[] = 'WC_Moota_Escrow';
 		return $methods;
 	}
 

@@ -1,6 +1,13 @@
 <?php
-function moota_get_field_setting() {}
-function moota_update_field_setting() {}
+function moota_get_bank() {
+	$bank = get_option('_user_bank_lists', []);
+	return $bank;
+}
+
+function moota_escrow() {
+	$escrow = get_option('_user_escrow_lists', []);
+	return $escrow;
+}
 
 function bank_listing($bank_id= null) {
 	$banks = [

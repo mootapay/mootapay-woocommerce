@@ -1,37 +1,42 @@
 <?php
+
 class Moota_Api {
 	private static $base_api = 'https://app.moota.co/api/v2';
 	private static $run;
 	private $api_token;
 
-	public function __construct($api_token) {
+	public function __construct( $api_token = null ) {
+		if ( empty($api_token) ) {
+			$api_token = get_option('access_token');
+		}
+
 		$this->api_token = $api_token;
 	}
 
-	public static function run($api_token) {
-		if ( ! self::$run instanceof  self ) {
-			self::$run = new self($api_token);
+	public static function run( $api_token = null ) {
+		if ( ! self::$run instanceof self ) {
+			self::$run = new self( $api_token );
 		}
 
 		return self::$run;
 	}
 
-	public function postApi($endpoint, $args = []) {
+	public function postApi( $endpoint, $args = [] ) {
 		$default_args = [
-			'method'      => 'POST',
-			'headers'     => [
-				'Content-Type' => 'application/json',
-				'Accept' => 'application/json',
+			'method'  => 'POST',
+			'headers' => [
+				'Content-Type'  => 'application/json',
+				'Accept'        => 'application/json',
 				'Authorization' => 'Bearer ' . $this->api_token,
 			],
 		];
 
-		$args = wp_parse_args($args, $default_args);
+		$args = wp_parse_args( $args, $default_args );
 
-		$response = wp_remote_post( self::$base_api . $endpoint, $args);
+		$response = wp_remote_post( self::$base_api . $endpoint, $args );
 
 		if ( is_wp_error( $response ) ) {
-			return ['error' => $response->get_error_message()];
+			return [ 'error' => $response->get_error_message() ];
 		} else {
 			return $response;
 		}
@@ -39,16 +44,16 @@ class Moota_Api {
 
 	public function getApi( $endpoint, $headers = [] ) {
 		$default_header = [
-			'Content-Type' => 'application/json',
-			'Accept' => 'application/json',
+			'Content-Type'  => 'application/json',
+			'Accept'        => 'application/json',
 			'Authorization' => 'Bearer ' . $this->api_token,
 		];
 
-		$headers['headers'] = wp_parse_args($headers, $default_header);
-		$response = wp_remote_get(self::$base_api . $endpoint, $headers);
+		$headers['headers'] = wp_parse_args( $headers, $default_header );
+		$response           = wp_remote_get( self::$base_api . $endpoint, $headers );
 
-		if ( ( !is_wp_error($response)) && (200 === wp_remote_retrieve_response_code( $response ) ) ) {
-			$responseBody = json_decode($response['body']);
+		if ( ( ! is_wp_error( $response ) ) && ( 200 === wp_remote_retrieve_response_code( $response ) ) ) {
+			$responseBody = json_decode( $response['body'] );
 			if ( json_last_error() === JSON_ERROR_NONE ) {
 				return $responseBody;
 			}
@@ -58,19 +63,48 @@ class Moota_Api {
 	}
 
 	public function getBank() {
-		return $this->getApi('/bank', [
-			'page' => 1,
+		$response =  $this->getApi( '/bank', [
+			'page'     => 1,
 			'per_page' => 50
-		]);
+		] );
+
+		if ( ! empty($response->data) ) {
+			return $response->data;
+		}
+
+		return [];
 	}
 
-	public function getPaymentMethod() {
-		return $this->getApi('/payment-method?page=1&per_page=100');
+	public function getEscrow() {
+		$response = $this->getApi( '/payment-method', [
+			'page'     => 1,
+			'per_page' => 50
+		] );
+
+		if ( ! empty($response->data) ) {
+			$escrows = [];
+			foreach ($response->data as $item) {
+				if ( $item->category == "escrow" ) {
+					$escrows[] = $item;
+				}
+			}
+
+			return $escrows;
+		}
+
+		return [];
 	}
 
-	public function postTransaction($data = []) {
-		return $this->getApi('contract', [
-			'body' => json_encode($data)
-		]);
+	public function postTransaction( $data = [] ) {
+		return $this->getApi( 'contract', [
+			'body' => json_encode( $data )
+		] );
+	}
+
+	public function getPluginToken() {
+		$response = $this->getApi( '/plugin/token' );
+		if ( ! empty($response->token) ) {
+			return $response->token;
+		}
 	}
 }

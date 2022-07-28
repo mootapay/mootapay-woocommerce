@@ -3,22 +3,15 @@
 use Moota\Moota\Config\Moota;
 
 class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
-	private $banks = [];
-	private static $payment_id = 'moota-bank-transfer';
+	private $bank_selection = [];
 
 	public function __construct() {
-		$this->id                 = self::$payment_id;
+		$this->id                 = 'moota-bank-transfer';
 		$this->has_fields         = true;
 		$this->method_title       = 'Bank Transfer';
 		$this->method_description = 'Terima Pembayaran langsung ke masuk kerekening tanpa biaya per-transaksi. Mendukung Banyak Bank Nasional';
 
 		$this->init_form_fields();
-
-		// fetch bank each Saving data
-		$this->fetch_bank_posts();
-
-        // fetch bank list each reload bank transfer page, delay 5 seconds
-        $this->update_bank_lists();
 
 		$this->init_settings();
 
@@ -32,92 +25,37 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 			'process_admin_options'
 		] );
 
-	}
 
-	private function fetch_bank_posts() {
-		if (
-			isset( $_POST[ "woocommerce_" . self::$payment_id . "_access_token" ] ) &&
-			empty( get_transient( "update_moota_payment" ) )
-		) {
-			$banks = Moota_Api::run( $this->settings['access_token'] )->getBank();
-			$this->set_bank_lists( $banks );
-			set_transient( "update_moota_payment", time(), 3 );
-		}
-	}
-
-	private function update_bank_lists() {
-		$settings = self::get_fields();
-		if ( ! get_transient( "moota_update_payment_method" ) ) {
-			$banks = Moota_Api::run( $settings['access_token'] )->getBank();
-			$this->set_bank_lists( $banks );
-			set_transient( 'moota_update_payment_method', 5 );
-		}
-	}
-
-	private function set_bank_lists( $banks ) {
-		if ( ! empty( $banks ) ) {
-			foreach ( $banks->data as $bank ) {
-				$this->banks[] = $bank;
-			}
-		}
-
-		$this->update_option( 'moota-bank-lists', $this->banks );
+		// custom fields
+		add_filter( 'woocommerce_generate_bank_lists_html', [ $this, 'bank_lists_bank' ], 99, 4 );
+		add_filter( 'woocommerce_settings_api_sanitized_fields_' . $this->id, function ( $settings ) {
+			return $settings;
+		} );
 	}
 
 	public function init_form_fields() {
-        $banks = [];
-        if ( $bank_lists = $this->get_option( 'moota-bank-lists' ) ) {
-            foreach ($bank_lists as $bank) {
-                $banks[$bank->bank_id] = $bank->label . ' ( ' . $bank->atas_nama . ' )';
-            }
-        }
-
 		$this->form_fields = array(
-			'enabled'        => array(
+			'enabled' => array(
 				'title'   => __( 'Enable/Disable', 'woocommerce-gateway-moota' ),
 				'type'    => 'checkbox',
 				'label'   => __( 'Aktifkan Moota Transaksi', 'woocommerce-gateway-moota' ),
 				'default' => 'yes'
 			),
-			'title'          => array(
+
+			'title'              => array(
 				'title'       => __( 'Title', 'woocommerce-gateway-moota' ),
 				'type'        => 'text',
 				'description' => __( 'Nama Yang Muncul Di halaman Checkout', 'woocommerce-gateway-moota' ),
 				'default'     => __( 'Moota Bank Transfer', 'woocommerce-gateway-moota' ),
 				'desc_tip'    => true,
 			),
-			'description'    => array(
+			'description'        => array(
 				'title'       => __( 'Deskripsi', 'woocommerce-gateway-moota' ),
 				'type'        => 'textarea',
 				'description' => 'Penjelasan akan muncul di halaman checkout',
 				'default'     => '',
 				'desc_tip'    => true,
 			),
-			'section_title'  => array(
-				'title'       => __( 'Pengaturan Umum', 'woocommerce-gateway-moota' ),
-				'type'        => 'title',
-				'description' => 'Semua Pembayaran Moota Transaksi Menggunakan Bagian Pengaturan Ini',
-			),
-			'access_token'   => array(
-				'title'       => __( 'Access Token', 'woocommerce-gateway-moota' ),
-				'type'        => 'password',
-				'description' => __( 'Moota Access Token, <a href="https://app.moota.co/integrations/personal" target="_blank">Ambil Token Disini</a>', 'woocommerce-gateway-moota' ),
-				'default'     => null,
-				'desc_tip'    => false,
-			),
-			'success_status' => array(
-				'title'       => __( 'Status Berhasil', 'woocommerce-gateway-moota' ),
-				'type'        => 'select',
-				'description' => __( 'Status setelah berhasil menemukan order yang telah dibayar', 'woocommerce-gateway-moota' ),
-				'default'     => 'processing',
-				'desc_tip'    => true,
-				'options'     => array(
-					'completed'  => 'Completed',
-					'on-hold'    => 'On Hold',
-					'processing' => 'Processing'
-				),
-			),
-
 			'bank_account_title' => array(
 				'title'       => __( 'Pengaturan Pembayaran', 'woocommerce-gateway-moota' ),
 				'type'        => 'title',
@@ -165,13 +103,11 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 				),
 				'desc_tip'          => true,
 			),
-			'bank_list'          => array(
+			'bank_lists'         => array(
 				'title'       => __( 'Daftar Bank', 'woocommerce-gateway-moota' ),
-				'type'        => 'multiselect',
-				'description' => __( 'Daftar Bank', 'woocommerce-gateway-moota' ),
+				'type'        => 'bank_lists',
+				'description' => __( 'Pilih Bank yang ingin digunakan', 'woocommerce-gateway-moota' ),
 				'id'          => 'woomoota_bank_list',
-				'options'     => $banks,
-				'desc_tip'    => true,
 			),
 		);
 	}
@@ -180,45 +116,98 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		parent::init_settings(); // TODO: Change the autogenerated stub
 	}
 
-    private function bank_selection( $bank_id ) {
-	    $bank_selection = [];
-	    $bank_lists = $this->get_option( 'moota-bank-lists' );
-        if ( $bank_lists ) {
-            foreach ($bank_lists as $bank) {
-                if ( $bank_id == $bank->bank_id ) {
-	                $bank_selection = $bank;
-                    break;
-                }
-            }
-        }
+	// Custom fields for check list bank
+	public function bank_lists_bank( $html, $k, $v, $object ) {
+		ob_start();
+		$field_key       = $object->get_field_key( $k );
+		$banks           = $this->get_option( 'moota-bank-lists', [] );
 
-        return $bank_selection;
-    }
+		?>
+        </table>
+        <h3 class="wc-settings-sub-title "
+            id="woocommerce_moota-bank-transfer_bank_account_<?php echo $v['id']; ?>>"><?php echo $v['title']; ?></h3>
+		<?php if ( ! empty( $v['description'] ) ) : ?>
+            <p><?php echo $v['description']; ?></p>
+		<?php endif; ?>
+        <table class="form-table">
+		<?php if ( is_array( $banks ) ) : ?>
+			<?php foreach ( $banks as $item ) :
+				$field_key_bank = $item->bank_type . '_' . $item->bank_id;
+				$checked = $this->bank_lists_checked( $k, $field_key_bank, $item->bank_id );
+				?>
+                <tr valign="top">
+                    <th scope="row" class="titledesc">
+                        <label for="<?php echo esc_attr( $field_key ); ?>"><?php echo wp_kses_post( $item->label . ' ' . $item->account_number . ' (' . $item->atas_nama . ')' ); ?></label>
+                    </th>
+                    <td class="forminp">
+                        <fieldset>
+                            <legend class="screen-reader-text"><span><?php echo wp_kses_post( $item->label ); ?></span>
+                            </legend>
+                            <input type="checkbox" name="<?php echo $field_key; ?>[<?php echo $field_key_bank; ?>]"
+                                   id="<?php echo $field_key . '_' . $item->bank_id; ?>"
+                                   value="<?php echo $item->bank_id; ?>" <?php echo $checked ? "checked" : ""; ?>/>
+                        </fieldset>
+                    </td>
+                </tr>
+
+			<?php endforeach; ?>
+		<?php endif; ?>
+
+
+		<?php
+
+		return ob_get_clean();
+	}
+
+	// Custom Validate
+	public function validate_bank_lists_field( $key, $value ) {
+		return $value;
+	}
+
+	// handle selection bank
+	private function bank_lists_checked( $k, $field_key, $value ): bool {
+		if ( empty( $this->bank_selection ) ) {
+			$this->bank_selection = $this->get_option( $k );
+		}
+
+		return ! empty( $this->bank_selection[ $field_key ] ) && $this->bank_selection[ $field_key ] == $value;
+	}
+
+	/**
+	 * Handle WooCommerce Checkout
+	 */
+	private function bank_selection( $bank_id ) {
+		$bank_selection = [];
+
+		return $bank_selection;
+	}
 
 	public function payment_fields() {
-		$banks = $this->settings['bank_list'];
-		?>
-        <ul>
-			<?php if ( ! empty( $banks ) ) :
-				foreach ( $banks as $item ) :
-                    $bank_selection = $this->bank_selection($item);
-                    ?>
-                    <li>
-                        <label for="bank-transfer-<?php echo $bank_selection->bank_type; ?> bank-id-<?php echo $item; ?>">
-                            <input id="bank-transfer-bank-id-<?php echo $item; ?>" name="channels" type="radio"
-                                   value="<?php echo $item; ?>">
-							<span><img src="<?php echo $bank_selection->icon;?>" alt="<?php echo $bank_selection->bank_type; ?>"></span>
-                            <span class="moota-bank-account"><?php echo $bank_selection->label; ?> <?php echo $bank_selection->account_number; ?> An. (<?php echo $bank_selection->atas_nama; ?>)</span>
-                        </label>
-                    </li>
-				<?php endforeach;
-			endif; ?>
-        </ul>
-		<?php
-		$description = $this->get_description();
-		if ( $description ) {
-			echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
-		}
+		/**
+		 * $banks = $this->settings['bank_lists'];
+		 * ?>
+		 * <ul>
+		 * <?php if ( ! empty( $banks ) ) :
+		 * foreach ( $banks as $item ) :
+		 * $bank_selection = $this->bank_selection($item);
+		 * ?>
+		 * <li>
+		 * <label for="bank-transfer-<?php echo $bank_selection->bank_type; ?> bank-id-<?php echo $item; ?>">
+		 * <input id="bank-transfer-bank-id-<?php echo $item; ?>" name="channels" type="radio"
+		 * value="<?php echo $item; ?>">
+		 * <span><img src="<?php echo $bank_selection->icon;?>" alt="<?php echo $bank_selection->bank_type; ?>"></span>
+		 * <span class="moota-bank-account"><?php echo $bank_selection->label; ?> <?php echo $bank_selection->account_number; ?> An. (<?php echo $bank_selection->atas_nama; ?>)</span>
+		 * </label>
+		 * </li>
+		 * <?php endforeach;
+		 * endif; ?>
+		 * </ul>
+		 * <?php
+		 * $description = $this->get_description();
+		 * if ( $description ) {
+		 * echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
+		 * }
+		 */
 	}
 
 	public function validate_fields() {
@@ -232,8 +221,6 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 	}
 
 	public function process_payment( $order_id ) {
-//		Moota::$ACCESS_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJucWllNHN3OGxsdyIsImp0aSI6ImVkOWMxMmExYjE4MjA1YWEzZWI0ZDRiYjBhNWUzNjIyMjRkM2NkZjIxMDA1YmFlMjJlNDk5M2I5MjA3MTQwNDM5YzZiMWZiNTllOTAxZDNmIiwiaWF0IjoxNjU1MTg1NzE4Ljg4MDU0MSwibmJmIjoxNjU1MTg1NzE4Ljg4MDU0MywiZXhwIjoxNjg2NzIxNzE4Ljg3ODQ1Niwic3ViIjoiMyIsInNjb3BlcyI6WyJhcGkiXX0.nmgHoQEnmfIBaKA0raNwXx0d1NxhPzRiEvkFbWSTxoqoLFuWgVgFw0kaL3uvE_ZcMXQnmBWuvTZXQAsurzZhlH6rTsytPS-lYlJgdSs9pdtsBy0eFZ3dCtmul4tccMwBXAiWQLrOJeuNe8gPQNtJgJ5sTDzXg7SMcc5qKNeIurB9jeBnqUMelt-nKBBJngBifUlBOVIAyHg5iXaH-BzHFBGxDFoxc2QBXy-T9UpVaCFzhkjBcj5u3B-QJqTtAbPHyXsArl1h46kerJEtoJusYifqQI6QsPpJuK4BkF_HAkXIs1jkuSB5YZ7zeVEamg7OHFs51EBSb1oIjNnVfdv9qYI11kq7Ar5v7eS2gBQJR6fuJ_HeHtNKq0ovBJ_UNjXFqTY5V2pnBEv5LO7fS2kZgk92nzX3RTipOKrmY1aBBMFVid2c3NJs_jFVF8Wlld-yXiW9yPkx6_6ITIqZmL5NTyk9VVyWGakf2OgfDeMo3rFzZ4Qo2N1H7s09JmOfmPRzVDjwZ8R6wEiDjqyBxeJ_qESw-IzY0dVlQzy1F0C4hNIKlrVpK5QKo7lxbf-Zkv-BQ8pppcF5g95tQVqiHjS6ur7wlpqh8SEj0aQ0WPmZpmkjkdpjL76HVjpayJOPSErYdN1AIr8uJOSdT039Xmds_1aWiC3BnHFjjMyK5lSh888';
-
 		global $woocommerce;
 		$order = new WC_Order( $order_id );
 		$order->update_meta_data( 'moota_channels', $_POST['channels'] );
@@ -277,9 +264,4 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 			'redirect' => $this->get_return_url( $order )
 		);
 	}
-
-	public static function get_fields() {
-		return get_option( 'woocommerce_' . self::$payment_id . '_settings', '' );
-	}
-
 }
