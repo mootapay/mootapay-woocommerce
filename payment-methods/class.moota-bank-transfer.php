@@ -3,7 +3,8 @@
 use Moota\Moota\Config\Moota;
 
 class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
-	private $bank_selection = [];
+	private array$bank_selection = [];
+    private $all_banks = [];
 
 	public function __construct() {
 		$this->id                 = 'moota-bank-transfer';
@@ -120,8 +121,7 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 	public function bank_lists_bank( $html, $k, $v, $object ) {
 		ob_start();
 		$field_key       = $object->get_field_key( $k );
-		$banks           = $this->get_option( 'moota-bank-lists', [] );
-
+		$banks           = moota_get_bank();
 		?>
         </table>
         <h3 class="wc-settings-sub-title "
@@ -177,40 +177,49 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 	 * Handle WooCommerce Checkout
 	 */
 	private function bank_selection( $bank_id ) {
-		$bank_selection = [];
+        if ( empty($this->all_banks) ) {
+            $this->all_banks = moota_get_bank();
+        }
 
-		return $bank_selection;
+        if ( ! empty($this->all_banks) ) {
+            foreach ($this->all_banks as $bank) {
+                if ( $bank_id == $bank->bank_id ) {
+                    return $bank;
+                }
+            }
+        }
+
+		return [];
 	}
 
 	public function payment_fields() {
-		/**
-		 * $banks = $this->settings['bank_lists'];
-		 * ?>
-		 * <ul>
-		 * <?php if ( ! empty( $banks ) ) :
-		 * foreach ( $banks as $item ) :
-		 * $bank_selection = $this->bank_selection($item);
-		 * ?>
-		 * <li>
-		 * <label for="bank-transfer-<?php echo $bank_selection->bank_type; ?> bank-id-<?php echo $item; ?>">
-		 * <input id="bank-transfer-bank-id-<?php echo $item; ?>" name="channels" type="radio"
-		 * value="<?php echo $item; ?>">
-		 * <span><img src="<?php echo $bank_selection->icon;?>" alt="<?php echo $bank_selection->bank_type; ?>"></span>
-		 * <span class="moota-bank-account"><?php echo $bank_selection->label; ?> <?php echo $bank_selection->account_number; ?> An. (<?php echo $bank_selection->atas_nama; ?>)</span>
-		 * </label>
-		 * </li>
-		 * <?php endforeach;
-		 * endif; ?>
-		 * </ul>
-		 * <?php
-		 * $description = $this->get_description();
-		 * if ( $description ) {
-		 * echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
-		 * }
-		 */
+
+        $banks = $this->settings['bank_lists'];
+		 ?>
+		 <ul>
+		 <?php if ( ! empty( $banks ) ) :
+             foreach ( $banks as $item ) :
+                    $bank_selection = $this->bank_selection( $item );
+                 ?>
+                 <li>
+                     <label for="bank-transfer-<?php echo $bank_selection->bank_type; ?> bank-id-<?php echo $item; ?>">
+                     <input id="bank-transfer-bank-id-<?php echo $item; ?>" name="channels" type="radio"
+                     value="<?php echo $item; ?>">
+                     <span><img src="<?php echo $bank_selection->icon;?>" alt="<?php echo $bank_selection->bank_type; ?>"></span>
+                     <span class="moota-bank-account"><?php echo $bank_selection->label; ?> <?php echo $bank_selection->account_number; ?> An. (<?php echo $bank_selection->atas_nama; ?>)</span>
+                     </label>
+                 </li>
+             <?php endforeach;
+         endif; ?>
+		 </ul>
+		 <?php
+		 $description = $this->get_description();
+         if ( $description ) {
+             echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
+         }
 	}
 
-	public function validate_fields() {
+	public function validate_fields():bool {
 		if ( empty( $_POST['channels'] ) ) {
 			wc_add_notice( '<strong>Channel Pembayaran</strong> Pilih Channel Pembayaran', 'error' );
 

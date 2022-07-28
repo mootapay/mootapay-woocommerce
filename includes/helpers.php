@@ -4,7 +4,7 @@ function moota_get_bank() {
 	return $bank;
 }
 
-function moota_escrow() {
+function moota_get_escrow() {
 	$escrow = get_option('_user_escrow_lists', []);
 	return $escrow;
 }

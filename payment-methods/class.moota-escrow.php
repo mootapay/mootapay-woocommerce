@@ -4,6 +4,7 @@ use Moota\Moota\Config\Moota;
 
 class WC_Moota_Escrow extends WC_Payment_Gateway {
 
+	private $all_escrow = [];
 	private $escrow_selection = [];
 
 	public function __construct() {
@@ -121,7 +122,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 
 		ob_start();
 		$field_key       = $object->get_field_key( $k );
-		$escrow          = moota_escrow();
+		$escrow          = moota_get_escrow();
 
 		?>
 		</table>
@@ -171,6 +172,53 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 		}
 
 		return ! empty( $this->escrow_selection[ $field_key ] ) && $this->escrow_selection[ $field_key ] == $value;
+	}
+
+
+	/**
+	 * Handle WooCommerce Checkout
+	 */
+	private function escrow_selection( $payment_id ) {
+        if ( empty($this->all_escrow) ) {
+            $this->all_escrow = moota_get_escrow();
+        }
+
+        if ( ! empty($this->all_escrow) ) {
+            foreach ($this->all_escrow as $escrow) {
+                if ( $payment_id == $escrow->payment_method_id ) {
+                    return $escrow;
+                }
+            }
+        }
+
+		return [];
+	}
+
+	public function payment_fields() {
+
+        $escrow = $this->settings['escrow_lists'];
+		 ?>
+		 <ul>
+		 <?php if ( ! empty( $escrow ) ) :
+             foreach ( $escrow as $item ) :
+                    $escrow_selection = $this->escrow_selection( $item );
+                 ?>
+                 <li>
+                     <label for="bank-transfer-<?php echo $escrow_selection->payment_method_type; ?> va-id-<?php echo $item; ?>">
+                     <input id="bank-transfer-va-id-<?php echo $item; ?>" name="channels" type="radio"
+                     value="<?php echo $item; ?>">
+                     <span><img width="80" src="<?php echo $escrow_selection->icon;?>" alt="<?php echo $escrow_selection->payment_method_type; ?>"></span>
+                     <span class="moota-bank-account"><?php echo $escrow_selection->name; ?></span>
+                     </label>
+                 </li>
+             <?php endforeach;
+         endif; ?>
+		 </ul>
+		 <?php
+		 $description = $this->get_description();
+         if ( $description ) {
+             echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
+         }
 	}
 
 }
