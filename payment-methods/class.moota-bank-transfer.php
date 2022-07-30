@@ -3,7 +3,7 @@
 use Moota\Moota\Config\Moota;
 
 class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
-	private array$bank_selection = [];
+	private array $bank_selection = [];
     private $all_banks = [];
 
 	public function __construct() {
@@ -32,6 +32,11 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		add_filter( 'woocommerce_settings_api_sanitized_fields_' . $this->id, function ( $settings ) {
 			return $settings;
 		} );
+
+        add_action('woocommerce_order_details_after_order_table_items', [$this, 'order_details']);
+//        register_shutdown_function(function () {
+//            print_r( error_get_last() );
+//        });
 	}
 
 	public function init_form_fields() {
@@ -230,16 +235,33 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 	}
 
 	public function process_payment( $order_id ) {
+
 		global $woocommerce;
 		$order = new WC_Order( $order_id );
-		$order->update_meta_data( 'moota_channels', $_POST['channels'] );
+        $bank_id = sanitize_text_field( $_POST['channels'] );
+		$order->update_meta_data( 'moota_channels', $bank_id );
+
+        $items = [];
+        /**
+         * @var $item WC_Order_Item_Product
+         */
+        foreach ($order->get_items() as $item) {
+            $product = wc_get_product($item->get_product_id());
+            $items[] = [
+                    'name'      => $item->get_name(),
+					'qty'       => $item->get_quantity(),
+					'price'     => $product->get_price(),
+					'sku'       => $product->get_sku(),
+					'image_url' => get_the_post_thumbnail_url($item->get_product_id())
+            ];
+        }
 
 		$args = [
 			'invoice_number'                  => $order->get_order_number(),
 			'amount'                          => $order->get_total(),
-			'payment_method_id'               => '',
-			'payment_method_type'             => '',
-			'callback_url'                    => '',
+			'payment_method_id'               => $bank_id,
+			'payment_method_type'             => 'bank_transfer',
+			'callback_url'                    => home_url('moota-callback'),
 			'increase_total_from_unique_code' => 1,
 			'expired_date'                    => '',
 			'customer'                        => [
@@ -247,19 +269,30 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 				'email' => $order->get_billing_email(),
 				'phone' => $order->get_billing_phone()
 			],
-			'items'                           => collect( $order->get_items() )->flatMap( function ( $item ) {
-				return [
-					'name'      => $item->get_name(),
-					'qty'       => $item->get_quantity(),
-					'price'     => $item->get_price(),
-					'sku'       => $item->get_sku(),
-					'image_url' => ''
-				];
-			} )->toArray()
+			'items'                           => $items
 		];
 
-		die();
-		$response = wp_remote_post( '{payment processor endpoint}', $args );
+        $payment_link = $this->get_return_url( $order );
+
+        $response = Moota_Api::run()->postTransaction( $args );
+
+        if ( $response && ! empty($response->data) ) {
+
+            if ( get_option('payment_mode', 'direct') == 'redirect' ) {
+                $payment_link = $response->data->payment_link;
+            }
+
+            $order->update_meta_data("contract_id", $response->data->contract_id);
+            $order->update_meta_data("trx_id", $response->data->trx_id);
+            $order->update_meta_data("unique_code", $response->data->unique_code);
+            $order->update_meta_data("total", $response->data->total);
+            $order->update_meta_data("payment_link", $response->data->payment_link);
+
+        } else {
+            wc_add_notice( '<strong>Terjadi Masalah Server</strong> Coba beberapa saat lagi', 'error' );
+			return false;
+        }
+
 
 		// Mark as on-hold (we're awaiting the cheque)
 		$order->update_status( 'on-hold', __( 'Awaiting Payment', 'woocommerce-gateway-moota' ) );
@@ -270,7 +303,22 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		// Return thankyou redirect
 		return array(
 			'result'   => 'success',
-			'redirect' => $this->get_return_url( $order )
+			'redirect' => $payment_link
 		);
 	}
+
+    public function order_details($order) {
+        if ( $order->get_payment_method() == $this->id ) {
+            ?>
+            <tr>
+                <th scope="row">Kode Unik</th>
+                <td>809</td>
+            </tr>
+            <tr>
+                <th scope="row">Nominal Yang Harus Dibayar</th>
+                <td>19.0909.00</td>
+            </tr>
+            <?php
+        }
+    }
 }

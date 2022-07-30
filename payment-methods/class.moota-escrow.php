@@ -32,6 +32,8 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 		add_filter( 'woocommerce_settings_api_sanitized_fields_' . $this->id, function ( $settings ) {
 			return $settings;
 		} );
+
+        add_action('woocommerce_order_details_after_order_table_items', [$this, 'order_details']);
 	}
 
 	public function init_form_fields() {
@@ -47,7 +49,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 				'title'       => __( 'Title', 'woocommerce-gateway-moota' ),
 				'type'        => 'text',
 				'description' => __( 'Nama Yang Muncul Di halaman Checkout', 'woocommerce-gateway-moota' ),
-				'default'     => __( 'Moota Bank Transfer', 'woocommerce-gateway-moota' ),
+				'default'     => __( 'Moota Bank Transfer VA', 'woocommerce-gateway-moota' ),
 				'desc_tip'    => true,
 			),
 			'description'        => array(
@@ -220,5 +222,94 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
              echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
          }
 	}
+
+    public function process_payment( $order_id ) {
+        global $woocommerce;
+        $order = new WC_Order( $order_id );
+        $va_id = sanitize_text_field( $_POST['channels'] );
+		$order->update_meta_data( 'moota_channels', $va_id );
+
+        $va_detail = $this->escrow_selection( $va_id );
+
+        $items = [];
+        /**
+         * @var $item WC_Order_Item_Product
+         */
+        foreach ($order->get_items() as $item) {
+            $product = wc_get_product($item->get_product_id());
+            $items[] = [
+                    'name'      => $item->get_name(),
+					'qty'       => $item->get_quantity(),
+					'price'     => $product->get_price(),
+					'sku'       => $product->get_sku(),
+					'image_url' => get_the_post_thumbnail_url($item->get_product_id())
+            ];
+        }
+
+		$args = [
+			'invoice_number'                  => $order->get_order_number(),
+			'amount'                          => $order->get_total(),
+			'payment_method_id'               => $va_id,
+			'payment_method_type'             => $va_detail->payment_method_type,
+			'callback_url'                    => home_url('moota-callback'),
+			'increase_total_from_unique_code' => 1,
+			'expired_date'                    => '',
+			'customer'                        => [
+				'name'  => $order->get_billing_first_name() . ' class.moota-gateway-sandbox.php' . $order->get_billing_last_name(),
+				'email' => $order->get_billing_email(),
+				'phone' => $order->get_billing_phone()
+			],
+			'items'                           => $items
+		];
+
+        $payment_link = $this->get_return_url( $order );
+
+        $response = Moota_Api::run()->postTransaction( $args );
+
+        if ( $response && ! empty($response->data) ) {
+
+            if ( get_option('payment_mode', 'direct') == 'redirect' ) {
+                $payment_link = $response->data->payment_link;
+            }
+
+            $order->update_meta_data("contract_id", $response->data->contract_id);
+            $order->update_meta_data("trx_id", $response->data->trx_id);
+            $order->update_meta_data("unique_code", $response->data->unique_code);
+            $order->update_meta_data("total", $response->data->total);
+            $order->update_meta_data("payment_link", $response->data->payment_link);
+
+        } else {
+            wc_add_notice( '<strong>Terjadi Masalah Server</strong> Coba beberapa saat lagi', 'error' );
+			return false;
+        }
+
+
+		// Mark as on-hold (we're awaiting the cheque)
+		$order->update_status( 'on-hold', __( 'Awaiting Payment', 'woocommerce-gateway-moota' ) );
+
+		// Remove cart
+		$woocommerce->cart->empty_cart();
+
+		// Return thankyou redirect
+		return array(
+			'result'   => 'success',
+			'redirect' => $payment_link
+		);
+    }
+
+    public function order_details($order) {
+        if ( $order->get_payment_method() == $this->id ) {
+            ?>
+            <tr>
+                <th scope="row">Kode Unik</th>
+                <td>809</td>
+            </tr>
+            <tr>
+                <th scope="row">Nominal Yang Harus Dibayar</th>
+                <td>19.0909.00</td>
+            </tr>
+            <?php
+        }
+    }
 
 }

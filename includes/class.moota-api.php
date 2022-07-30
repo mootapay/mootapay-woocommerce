@@ -62,7 +62,24 @@ class Moota_Api {
 		return [];
 	}
 
-	public function getBank() {
+	public function getPaymentMethod(): array {
+		$payment_method = [];
+		$response = $this->getApi( '/payment-method', [
+			'page'     => 1,
+			'per_page' => 100
+		] );
+
+		if ( ! empty($response->data) ) {
+			foreach ($response->data as $item) {
+				$payment_method[$item->category][] = $item;
+			}
+
+		}
+
+		return $payment_method;
+	}
+
+	public function getBank(): array {
 		$response =  $this->getApi( '/bank', [
 			'page'     => 1,
 			'per_page' => 50
@@ -74,37 +91,36 @@ class Moota_Api {
 
 		return [];
 	}
-
 	public function getEscrow() {
-		$response = $this->getApi( '/payment-method', [
-			'page'     => 1,
-			'per_page' => 50
-		] );
-
-		if ( ! empty($response->data) ) {
-			$escrows = [];
-			foreach ($response->data as $item) {
-				if ( $item->category == "escrow" ) {
-					$escrows[] = $item;
-				}
-			}
-
-			return $escrows;
+		$escrow = [];
+		$payment_method = $this->getPaymentMethod();
+		if ( ! empty($payment_method['escrow']) ) {
+			$escrow = $payment_method['escrow'];
 		}
 
-		return [];
+		return $escrow;
 	}
 
 	public function postTransaction( $data = [] ) {
-		return $this->getApi( 'contract', [
+		return $this->postApi( 'contract', [
 			'body' => json_encode( $data )
 		] );
 	}
 
-	public function getPluginToken() {
+	public function getPluginToken(): string {
 		$response = $this->getApi( '/plugin/token' );
 		if ( ! empty($response->token) ) {
 			return $response->token;
 		}
+
+		return "";
 	}
+}
+
+add_action('woocommerce_before_order_itemmeta','woocommerce_before_order_itemmeta',10,3);
+function woocommerce_before_order_itemmeta($item_id, $item, $product){
+	$shippingclass = $product->get_shipping_class();
+
+	echo ($shippingclass) ? __('<hr><b>Shipping with: </b> <i style = "text-transform:uppercase">'. $shippingclass .'</i><hr>','woocommerce') : 'No Shipping Class is assigned to this product';
+	echo '<p><b>Category:</b>  <i>'.get_the_term_list($product->id, 'product_cat').'</i></p>';
 }

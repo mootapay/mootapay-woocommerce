@@ -31,37 +31,13 @@ class Moota_Webhook {
 			if ( $http_signature && $_SERVER['REQUEST_METHOD'] == 'POST' ) {
 				$log      = '';
 				$response = file_get_contents( 'php://input' );
-				$secret   = 'PIOkB0lM';
+				$secret   = get_option('plugin_token');
 
 				$signature = hash_hmac( 'sha256', $response, $secret );
 				if ( hash_equals( $http_signature, $signature ) ) {
 
 					$responseArray = json_decode( $response, true );
-//					if ( ! empty( $responseArray[0] ) ) {
-//						$amount = $responseArray[0]['amount'];
-//
-//						global $wpdb;
-//						$sql    = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'total_with_unique_code' AND meta_value = '{$amount}'";
-//						$result = $wpdb->get_results( $sql, ARRAY_A );
-//						if ( count( $result ) == 1 ) {
-//							$row = $wpdb->get_row( $sql );
-//							update_post_meta($row->post_id, 'status_order', 'pending');
-//							update_post_meta($row->post_id, 'date_pending', date('d-m-Y H:i:s'));
-//							Neon_Send_Email::paymentOrderPending( $row->post_id );
-//
-//						} else if ( count( $result ) > 1 ) {
-//							$id = [];
-//							foreach ( $result as $item ) {
-//								$id[] = $item['post_id'];
-//							}
-//
-//							$log = 'multiple order id : ' . implode( ', ', $id );
-//						} else {
-//							$log = 'Order Id Not Found';
-//						}
-//					} else {
-//						$log = 'No response';
-//					}
+
 				} else {
 					$log = 'Invalid Signature';
 				}

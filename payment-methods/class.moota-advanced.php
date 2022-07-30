@@ -34,6 +34,18 @@ class WC_Moota_Advanced {
 				'default'     => null,
 				'desc_tip'    => false,
 			),
+			'payment_mode'   => array(
+				'id' => 'payment_mode',
+				'title'       => __( 'Payment Mode', 'woocommerce-gateway-moota' ),
+				'type'        => 'select',
+				'description' => __( 'Pembayaran melalui Woocommerce atau Halaman Moota', 'woocommerce-gateway-moota' ),
+				'options'     => array(
+					'direct' => 'WooCommerce Page',
+					'redirect' => 'Moota Checkout Page'
+				),
+				'default'     => null,
+				'desc_tip'    => false,
+			),
 			'plugin_token'   => array(
 				'id' => 'plugin_token',
 				'title'       => __( 'Plugins Token', 'woocommerce-gateway-moota' ),
