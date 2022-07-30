@@ -36,7 +36,30 @@ class Moota_Webhook {
 				$signature = hash_hmac( 'sha256', $response, $secret );
 				if ( hash_equals( $http_signature, $signature ) ) {
 
-					$responseArray = json_decode( $response, true );
+					$result = json_decode( $response );
+					if ( $result && ! empty($result->data) ) {
+						$trx_id = $result->trx_id;
+						global $wpdb;
+						$sql = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='trx_id' AND meta_value='{$trx_id}'";
+						$meta = $wpdb->get_row($sql);
+
+						$order = new WC_Order( $meta->post_id );
+
+						if ( $order->has_status() ) {
+							switch ($result->status) {
+								case 'pending' :
+									$order->update_status('on-hold');
+									break;
+								case 'success' :
+									$order->update_status('processing');
+									break;
+								default:
+									$order->update_status('cancelled');
+
+							}
+						}
+
+					}
 
 				} else {
 					$log = 'Invalid Signature';
