@@ -116,11 +116,3 @@ class Moota_Api {
 		return "";
 	}
 }
-
-add_action('woocommerce_before_order_itemmeta','woocommerce_before_order_itemmeta',10,3);
-function woocommerce_before_order_itemmeta($item_id, $item, $product){
-	$shippingclass = $product->get_shipping_class();
-
-	echo ($shippingclass) ? __('<hr><b>Shipping with: </b> <i style = "text-transform:uppercase">'. $shippingclass .'</i><hr>','woocommerce') : 'No Shipping Class is assigned to this product';
-	echo '<p><b>Category:</b>  <i>'.get_the_term_list($product->id, 'product_cat').'</i></p>';
-}

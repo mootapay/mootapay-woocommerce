@@ -32,6 +32,7 @@ class Moota_Loader {
 	private function require_files() {
 		require_once MOOTA_INCLUDES . '/helpers.php';
 		require_once MOOTA_INCLUDES . '/class.moota-api.php';
+		require_once MOOTA_PAYMENT_METHOD . '/class.moota-transaction.php';
 		require_once MOOTA_PAYMENT_METHOD . '/class.moota-webhook.php';
 	}
 
