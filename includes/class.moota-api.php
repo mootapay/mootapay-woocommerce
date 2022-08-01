@@ -38,7 +38,7 @@ class Moota_Api {
 		if ( is_wp_error( $response ) ) {
 			return [ 'error' => $response->get_error_message() ];
 		} else {
-			return $response;
+			return json_decode( wp_remote_retrieve_body( $response ) );
 		}
 	}
 
@@ -102,8 +102,8 @@ class Moota_Api {
 	}
 
 	public function postTransaction( $data = [] ) {
-		return $this->postApi( 'contract', [
-			'body' => json_encode( $data )
+		return $this->postApi( '/contract', [
+			'body' => wp_json_encode( $data )
 		] );
 	}
 

@@ -14,10 +14,15 @@ class Moota_Transaction {
 			$items[] = [
 				'name'      => $item->get_name(),
 				'qty'       => $item->get_quantity(),
-				'price'     => $product->get_price(),
+				'price'     => $product->get_price() * $item->get_quantity(),
 				'sku'       => $product->get_sku(),
 				'image_url' => get_the_post_thumbnail_url($item->get_product_id())
 			];
+
+			if ( empty($product->get_sku()) ) {
+				wc_add_notice( '<strong>SKU salah</strong> Hubungi Adamin', 'error' );
+				return false;
+			}
 		}
 
 		$args = [
@@ -46,7 +51,6 @@ class Moota_Transaction {
 				$payment_link = $response->data->payment_link;
 			}
 
-			$order->update_meta_data("contract_id", $response->data->contract_id);
 			$order->update_meta_data("trx_id", $response->data->trx_id);
 			$order->update_meta_data("unique_code", $response->data->unique_code);
 			$order->update_meta_data("total", $response->data->total);
@@ -56,7 +60,6 @@ class Moota_Transaction {
 			wc_add_notice( '<strong>Terjadi Masalah Server</strong> Coba beberapa saat lagi', 'error' );
 			return false;
 		}
-
 
 		// Mark as on-hold (we're awaiting the cheque)
 		$order->update_status( 'on-hold', __( 'Awaiting Payment', 'woocommerce-gateway-moota' ) );
