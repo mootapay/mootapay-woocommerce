@@ -37,15 +37,16 @@ class Moota_Webhook {
 				if ( hash_equals( $http_signature, $signature ) ) {
 
 					$result = json_decode( $response );
-					if ( $result && ! empty($result->data) ) {
+					if ( ! empty($result) ) {
 						$trx_id = $result->trx_id;
+
 						global $wpdb;
 						$sql = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='trx_id' AND meta_value='{$trx_id}'";
 						$meta = $wpdb->get_row($sql);
 
 						$order = new WC_Order( $meta->post_id );
 
-						if ( $order->has_status() ) {
+						if ( $order->get_order_number() ) {
 							switch ($result->status) {
 								case 'pending' :
 									$order->update_status('on-hold');
@@ -53,8 +54,11 @@ class Moota_Webhook {
 								case 'success' :
 									$order->update_status('processing');
 									break;
-								default:
+								case 'cancelled' :
 									$order->update_status('cancelled');
+									break;
+								default:
+									$order->update_status('failed');
 
 							}
 						}
