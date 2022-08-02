@@ -20,7 +20,7 @@ class Moota_Transaction {
 			];
 
 			if ( empty($product->get_sku()) ) {
-				wc_add_notice( '<strong>SKU salah</strong> Hubungi Adamin', 'error' );
+				wc_add_notice( '<strong>SKU salah</strong> Hubungi Admin', 'error' );
 				return false;
 			}
 		}

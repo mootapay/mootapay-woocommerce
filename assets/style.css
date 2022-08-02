@@ -6,3 +6,37 @@
     font-size: 14px;
     display: block;
 }
+.payment_box.payment_method_moota-bank-transfer,
+.payment_box.payment_method_moota-escrow {}
+
+.payment_box.payment_method_moota-bank-transfer li,
+.payment_box.payment_method_moota-escrow li {
+    list-style:
+            none;
+    margin-bottom: 10px !important;
+}
+
+.payment_box.payment_method_moota-bank-transfer li label,
+.payment_box.payment_method_moota-escrow li label {
+    display:flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.payment_box.payment_method_moota-bank-transfer li label > span,
+.payment_box.payment_method_moota-escrow li label > span {
+    width:100px;
+}
+
+.payment_box.payment_method_moota-bank-transfer li label > span.moota-bank-account,
+.payment_box.payment_method_moota-escrow li label > span.moota-bank-account {
+    width:300px;
+    padding-left: 40px;
+    line-height: 1.2;
+}
+
+.payment_box.payment_method_moota-bank-transfer span img,
+.payment_box.payment_method_moota-escrow span img {
+    width:80px;
+    height:auto;
+}
