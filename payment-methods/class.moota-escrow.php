@@ -33,7 +33,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 			return $settings;
 		} );
 
-        add_action('woocommerce_order_details_after_order_table_items', [$this, 'order_details']);
+        add_action('woocommerce_order_details_after_order_table', [$this, 'order_details'], 99);
 	}
 
 	public function init_form_fields() {
@@ -230,17 +230,26 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 
         return Moota_Transaction::request($order_id, $channel_id, $va_detail->payment_method_type);
     }
+
     public function order_details($order) {
         if ( $order->get_payment_method() == $this->id ) {
+            $kodeunik = get_post_meta($order->get_id(), 'unique_code', true );
+            $total = get_post_meta($order->get_id(), 'total', true );
+            $payment_link = get_post_meta($order->get_id(), 'payment_link', true );
             ?>
-            <tr>
-                <th scope="row">Kode Unik</th>
-                <td>809</td>
-            </tr>
-            <tr>
-                <th scope="row">Nominal Yang Harus Dibayar</th>
-                <td>19.0909.00</td>
-            </tr>
+            <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
+               <tr>
+                    <th scope="row">Kode Unik</th>
+                    <td><?php echo $kodeunik?></td>
+               </tr>
+               <tr>
+                   <th scope="row">Nominal Yang Harus Dibayar</th>
+                   <td><?php echo wc_price($total);?></td>
+               </tr>
+               <tr>
+                    <td colspan="2" style="text-align: center"><a href="<?php echo $payment_link;?>">Check Status Pembayaran</a></td>
+               </tr>
+            </table>
             <?php
         }
     }

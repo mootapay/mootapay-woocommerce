@@ -3,8 +3,8 @@
 use Moota\Moota\Config\Moota;
 
 class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
-	private array $bank_selection = [];
-    private array $all_banks = [];
+	private $bank_selection = [];
+    private $all_banks = [];
 
 	public function __construct() {
 		$this->id                 = 'moota-bank-transfer';
