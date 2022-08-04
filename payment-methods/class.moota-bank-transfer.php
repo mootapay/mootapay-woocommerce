@@ -34,9 +34,6 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		} );
 
         add_action('woocommerce_order_details_after_order_table', [$this, 'order_details'], 99);
-//        register_shutdown_function(function () {
-//            print_r( error_get_last() );
-//        });
 	}
 
 	public function init_form_fields() {
@@ -236,7 +233,11 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 
 	public function process_payment( $order_id ) {
         $channel_id = sanitize_text_field( $_POST['channels'] );
-		return Moota_Transaction::request($order_id, $channel_id, 'bank_transfer');
+        $with_unique_code = $this->settings['toggle_status'];
+        $unique_start = $this->settings['unique_start'];
+        $unique_end = $this->settings['unique_end'];
+
+		return Moota_Transaction::request($order_id, $channel_id, $with_unique_code, $unique_start, $unique_end, 'bank_transfer');
 	}
 
     public function order_details($order) {
@@ -246,10 +247,12 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
             $payment_link = get_post_meta($order->get_id(), 'payment_link', true );
             ?>
             <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
+               <?php if ( $this->settings['toggle_status'] ) : ?>
                <tr>
                     <th scope="row">Kode Unik</th>
                     <td><?php echo $kodeunik?></td>
                </tr>
+               <?php endif;?>
                <tr>
                    <th scope="row">Nominal Yang Harus Dibayar</th>
                    <td><?php echo wc_price($total);?></td>

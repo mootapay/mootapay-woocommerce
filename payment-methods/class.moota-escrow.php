@@ -228,7 +228,18 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
         $channel_id = sanitize_text_field( $_POST['channels'] );
         $va_detail = $this->escrow_selection( $channel_id );
 
-        return Moota_Transaction::request($order_id, $channel_id, $va_detail->payment_method_type);
+        $with_unique_code = $this->settings['toggle_status'];
+        $unique_start = $this->settings['unique_start'];
+        $unique_end = $this->settings['unique_end'];
+
+        return Moota_Transaction::request(
+                $order_id,
+                $channel_id,
+                $with_unique_code,
+                $unique_start,
+                $unique_end,
+                $va_detail->payment_method_type
+            );
     }
 
     public function order_details($order) {
@@ -238,10 +249,12 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
             $payment_link = get_post_meta($order->get_id(), 'payment_link', true );
             ?>
             <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
+               <?php if ( $this->settings['toggle_status'] ) : ?>
                <tr>
                     <th scope="row">Kode Unik</th>
                     <td><?php echo $kodeunik?></td>
                </tr>
+               <?php endif;?>
                <tr>
                    <th scope="row">Nominal Yang Harus Dibayar</th>
                    <td><?php echo wc_price($total);?></td>

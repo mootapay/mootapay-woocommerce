@@ -37,6 +37,6 @@
 
 .payment_box.payment_method_moota-bank-transfer span img,
 .payment_box.payment_method_moota-escrow span img {
-    width:80px;
-    height:auto;
+    width: 70px;
+    height: auto;
 }
