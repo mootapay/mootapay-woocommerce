@@ -26,6 +26,16 @@ class Moota_Transaction {
 			}
 		}
 
+		if ( $order->get_shipping_total() ) {
+			$items[] = [
+				'name'      => 'shipping cost',
+				'qty'       => 1,
+				'price'     => $order->get_shipping_total(),
+				'sku'       => 'shipping-cost',
+				'image_url' => ''
+			];
+		}
+
 		if ( strlen($start_unique_code) < 2 ) {
 			$start_unique_code = sprintf('%02d', $start_unique_code);
 		}
@@ -39,7 +49,7 @@ class Moota_Transaction {
 			'amount'                          => $order->get_total(),
 			'payment_method_id'               => $channel_id,
 			'payment_method_type'             => $payment_method_type,
-			'with_unique_code'                => $with_unique_code,
+			'with_unique_code'                => $with_unique_code == "no" ? 0 : 1,
 			'callback_url'                    => home_url( 'moota-callback' ),
 			'increase_total_from_unique_code' => 1,
 			'start_unique_code'               => $start_unique_code,

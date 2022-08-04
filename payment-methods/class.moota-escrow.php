@@ -249,7 +249,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
             $payment_link = get_post_meta($order->get_id(), 'payment_link', true );
             ?>
             <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
-               <?php if ( $this->settings['toggle_status'] ) : ?>
+               <?php if ( $this->settings['toggle_status'] != 'no' ) : ?>
                <tr>
                     <th scope="row">Kode Unik</th>
                     <td><?php echo $kodeunik?></td>
