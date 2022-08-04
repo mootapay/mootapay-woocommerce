@@ -56,7 +56,7 @@ class Moota_Transaction {
 			'end_unique_code'                 => $end_unique_code,
 			'expired_date'                    => date( 'Y-m-d H:i:s', strtotime( '+1 day' ) ),
 			'customer'                        => [
-				'name'  => $order->get_billing_first_name() . ' class.moota-gateway-sandbox.php' . $order->get_billing_last_name(),
+				'name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
 				'email' => $order->get_billing_email(),
 				'phone' => $order->get_billing_phone()
 			],
