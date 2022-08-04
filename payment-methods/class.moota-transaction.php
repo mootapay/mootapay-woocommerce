@@ -28,10 +28,20 @@ class Moota_Transaction {
 
 		if ( $order->get_shipping_total() ) {
 			$items[] = [
-				'name'      => 'shipping cost',
+				'name'      => 'Ongkos Kirim',
 				'qty'       => 1,
 				'price'     => $order->get_shipping_total(),
 				'sku'       => 'shipping-cost',
+				'image_url' => ''
+			];
+		}
+
+		if ( $order->get_tax_totals() ) {
+			$items[] = [
+				'name'      => 'Pajak',
+				'qty'       => 1,
+				'price'     => $order->get_tax_totals(),
+				'sku'       => 'taxes-cost',
 				'image_url' => ''
 			];
 		}
