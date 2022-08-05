@@ -54,6 +54,11 @@ class Moota_Transaction {
 			$end_unique_code += 10;
 		}
 
+		$minutes = get_option('woocommerce_hold_stock_minutes');
+		if ( empty($minutes) ) {
+			$minutes = 3600;
+		}
+
 		$args = [
 			'invoice_number'                  => $order->get_order_number(),
 			'amount'                          => $order->get_total(),
@@ -64,7 +69,7 @@ class Moota_Transaction {
 			'increase_total_from_unique_code' => 1,
 			'start_unique_code'               => $start_unique_code,
 			'end_unique_code'                 => $end_unique_code,
-			'expired_date'                    => date( 'Y-m-d H:i:s', strtotime( '+1 day' ) ),
+			'expired_date'                    => date( 'Y-m-d H:i:s', strtotime( "+{$minutes} minutes" ) ),
 			'customer'                        => [
 				'name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
 				'email' => $order->get_billing_email(),
