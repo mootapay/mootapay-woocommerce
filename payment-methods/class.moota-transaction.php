@@ -55,7 +55,7 @@ class Moota_Transaction {
 		}
 
 
-		$minutes = get_option('woocommerce_hold_stock_minutes');
+		$minutes = (int) get_option('woocommerce_hold_stock_minutes');
 		if ( get_option('woocommerce_manage_stock', 'yes') == 'yes' ) {
 			if ( $payment_method_type == 'bank_transfer' ) {
 				if ( empty($minutes) || $minutes > 43200 ) {
