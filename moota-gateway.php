@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: WooCommerce Moota Gateway
- * Plugin URI: https://wordpress.org/plugins/woocommerce-gateway-moota/
+ * Plugin Name: Moota Gateway
+ * Plugin URI: https://wordpress.org/plugins/moota-gateway/
  * Description: Payment Using Personal Bank Account Or Moota Escrow
  * Author: Moota
  * Author URI: https://moota.co/
@@ -10,7 +10,7 @@
  * Tested up to: 5.9
  * WC requires at least: 5.7
  * WC tested up to: 6.2
- * Text Domain: woocommerce-gateway-moota
+ * Text Domain: moota-gateway
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
