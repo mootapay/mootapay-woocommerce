@@ -1,87 +1,49 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Spatie\DataTransferObject;
 
 use ReflectionClass;
 use ReflectionProperty;
+use Spatie\DataTransferObject\Attributes\CastWith;
+use Spatie\DataTransferObject\Attributes\MapTo;
+use Spatie\DataTransferObject\Casters\DataTransferObjectCaster;
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
+use Spatie\DataTransferObject\Reflection\DataTransferObjectClass;
 
+#[CastWith(DataTransferObjectCaster::class)]
 abstract class DataTransferObject
 {
-    /** @var bool */
-    protected $ignoreMissing = false;
+    protected array $exceptKeys = [];
 
-    /** @var array */
-    protected $exceptKeys = [];
+    protected array $onlyKeys = [];
 
-    /** @var array */
-    protected $onlyKeys = [];
-
-    /**
-     * @param array $parameters
-     *
-     * @return \Spatie\DataTransferObject\ImmutableDataTransferObject|static
-     */
-    public static function immutable(array $parameters = []): ImmutableDataTransferObject
+    public function __construct(...$args)
     {
-        return new ImmutableDataTransferObject(new static($parameters));
+        if (is_array($args[0] ?? null)) {
+            $args = $args[0];
+        }
+
+        $class = new DataTransferObjectClass($this);
+
+        foreach ($class->getProperties() as $property) {
+            $property->setValue(Arr::get($args, $property->name, $property->getDefaultValue()));
+
+            $args = Arr::forget($args, $property->name);
+        }
+
+        if ($class->isStrict() && count($args)) {
+            throw UnknownProperties::new(static::class, array_keys($args));
+        }
+
+        $class->validate();
     }
 
-    /**
-     * @param array $arrayOfParameters
-     *
-     * @return \Spatie\DataTransferObject\ImmutableDataTransferObject[]|static[]
-     */
     public static function arrayOf(array $arrayOfParameters): array
     {
         return array_map(
-            function ($parameters) {
-                return new static($parameters);
-            },
+            fn (mixed $parameters) => new static($parameters),
             $arrayOfParameters
         );
-    }
-
-    public function __construct(array $parameters = [])
-    {
-        $validators = $this->getFieldValidators();
-
-        $valueCaster = $this->getValueCaster();
-
-        foreach ($validators as $field => $validator) {
-            if (
-                ! isset($parameters[$field])
-                && ! $validator->hasDefaultValue
-                && ! $validator->isNullable
-            ) {
-                throw DataTransferObjectError::uninitialized(
-                    static::class,
-                    $field
-                );
-            }
-
-            $value = $parameters[$field] ?? $this->{$field} ?? null;
-
-            $value = $this->castValue($valueCaster, $validator, $value);
-
-            if (! $validator->isValidType($value)) {
-                throw DataTransferObjectError::invalidType(
-                    static::class,
-                    $field,
-                    $validator->allowedTypes,
-                    $value
-                );
-            }
-
-            $this->{$field} = $value;
-
-            unset($parameters[$field]);
-        }
-
-        if (! $this->ignoreMissing && count($parameters)) {
-            throw DataTransferObjectError::unknownProperties(array_keys($parameters), static::class);
-        }
     }
 
     public function all(): array
@@ -92,44 +54,41 @@ abstract class DataTransferObject
 
         $properties = $class->getProperties(ReflectionProperty::IS_PUBLIC);
 
-        foreach ($properties as $reflectionProperty) {
-            // Skip static properties
-            if ($reflectionProperty->isStatic()) {
+        foreach ($properties as $property) {
+            if ($property->isStatic()) {
                 continue;
             }
 
-            $data[$reflectionProperty->getName()] = $reflectionProperty->getValue($this);
+            $mapToAttribute = $property->getAttributes(MapTo::class);
+            $name = count($mapToAttribute) ? $mapToAttribute[0]->newInstance()->name : $property->getName();
+
+            $data[$name] = $property->getValue($this);
         }
 
         return $data;
     }
 
-    /**
-     * @param string ...$keys
-     *
-     * @return static
-     */
-    public function only(string ...$keys): DataTransferObject
+    public function only(string ...$keys): static
     {
-        $valueObject = clone $this;
+        $dataTransferObject = clone $this;
 
-        $valueObject->onlyKeys = array_merge($this->onlyKeys, $keys);
+        $dataTransferObject->onlyKeys = [...$this->onlyKeys, ...$keys];
 
-        return $valueObject;
+        return $dataTransferObject;
     }
 
-    /**
-     * @param string ...$keys
-     *
-     * @return static
-     */
-    public function except(string ...$keys): DataTransferObject
+    public function except(string ...$keys): static
     {
-        $valueObject = clone $this;
+        $dataTransferObject = clone $this;
 
-        $valueObject->exceptKeys = array_merge($this->exceptKeys, $keys);
+        $dataTransferObject->exceptKeys = [...$this->exceptKeys, ...$keys];
 
-        return $valueObject;
+        return $dataTransferObject;
+    }
+
+    public function clone(...$args): static
+    {
+        return new static(...array_merge($this->toArray(), $args));
     }
 
     public function toArray(): array
@@ -148,10 +107,7 @@ abstract class DataTransferObject
     protected function parseArray(array $array): array
     {
         foreach ($array as $key => $value) {
-            if (
-                $value instanceof DataTransferObject
-                || $value instanceof DataTransferObjectCollection
-            ) {
+            if ($value instanceof DataTransferObject) {
                 $array[$key] = $value->toArray();
 
                 continue;
@@ -165,53 +121,5 @@ abstract class DataTransferObject
         }
 
         return $array;
-    }
-
-    /**
-     * @param \ReflectionClass $class
-     *
-     * @return \Spatie\DataTransferObject\FieldValidator[]
-     */
-    protected function getFieldValidators(): array
-    {
-        return DTOCache::resolve(static::class, function () {
-            $class = new ReflectionClass(static::class);
-
-            $properties = [];
-
-            foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $reflectionProperty) {
-                // Skip static properties
-                if ($reflectionProperty->isStatic()) {
-                    continue;
-                }
-
-                $field = $reflectionProperty->getName();
-
-                $properties[$field] = FieldValidator::fromReflection($reflectionProperty);
-            }
-
-            return $properties;
-        });
-    }
-
-    /**
-     * @param \Spatie\DataTransferObject\ValueCaster $valueCaster
-     * @param \Spatie\DataTransferObject\FieldValidator $fieldValidator
-     * @param mixed $value
-     *
-     * @return mixed
-     */
-    protected function castValue(ValueCaster $valueCaster, FieldValidator $fieldValidator, $value)
-    {
-        if (is_array($value)) {
-            return $valueCaster->cast($value, $fieldValidator);
-        }
-
-        return $value;
-    }
-
-    protected function getValueCaster(): ValueCaster
-    {
-        return new ValueCaster();
     }
 }
