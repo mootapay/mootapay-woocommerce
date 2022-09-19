@@ -10,7 +10,7 @@ class WC_Moota_Advanced {
 
 
 	public function general( $sections ) {
-		$sections['moota'] = 'Setting Moota';
+		$sections['moota'] = 'Moota Pay';
 
 		return $sections;
 	}
