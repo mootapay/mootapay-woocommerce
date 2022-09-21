@@ -36,11 +36,16 @@ class Moota_Transaction {
 			];
 		}
 
+		$tax = 0;
+
 		if ( $order->get_tax_totals() ) {
+			foreach ($order->get_tax_totals() as $i) {
+				$tax += $i->amount;
+			}
 			$items[] = [
 				'name'      => 'Pajak',
 				'qty'       => 1,
-				'price'     => $order->get_tax_totals(),
+				'price'     => $tax,
 				'sku'       => 'taxes-cost',
 				'image_url' => ''
 			];
@@ -53,7 +58,6 @@ class Moota_Transaction {
 		if ( $start_unique_code > $end_unique_code ) {
 			$end_unique_code += 10;
 		}
-
 
 		$minutes = (int) get_option('woocommerce_hold_stock_minutes');
 		if ( get_option('woocommerce_manage_stock', 'yes') == 'yes' ) {
@@ -69,7 +73,6 @@ class Moota_Transaction {
 		} else {
 			$minutes = 1440;
 		}
-
 
 		$args = [
 			'invoice_number'                  => $order->get_order_number(),
@@ -113,7 +116,6 @@ class Moota_Transaction {
 			} else {
 				wc_add_notice( '<strong>Terjadi Masalah Server</strong> Coba beberapa saat lagi', 'error' );
 			}
-
 
 			return false;
 		}

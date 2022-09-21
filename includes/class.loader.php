@@ -14,6 +14,10 @@ class Moota_Loader {
 
 		add_filter( 'woocommerce_payment_gateways', [ $this, 'add_moota_gateway_class' ] );
 
+        register_shutdown_function(function () {
+           print_r( error_get_last() );
+        });
+
 	}
 
     public function add_setting_page($settings) {
