@@ -1,17 +1,17 @@
 <?php
 /**
- * Plugin Name: WooMootaPay
- * Plugin URI: https://wordpress.org/plugins/woomootapay/
+ * Plugin Name: MootaPay For WooCommerce
+ * Plugin URI: https://wordpress.org/plugins/mootapay-for-woocommerce/
  * Description: Platform penerima pembayaran otomatis untuk produk, jasa dan apapun.
- * Author: Fattah
- * Author URI: https://fattah.id/
+ * Author: Moota Pay
+ * Author URI: https://mootapay.com/
  * Version: 1.0.0
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Tested up to: 5.9
  * WC requires at least: 5.7
  * WC tested up to: 6.2
- * Text Domain: woomootapay
+ * Text Domain: mootapay-woocommerce
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
