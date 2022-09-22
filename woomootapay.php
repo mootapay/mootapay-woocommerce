@@ -1,17 +1,17 @@
 <?php
 /**
- * Plugin Name: Moota Gateway
- * Plugin URI: https://wordpress.org/plugins/moota-gateway/
- * Description: Payment Using Personal Bank Account Or Moota Escrow
- * Author: Moota
- * Author URI: https://moota.co/
+ * Plugin Name: WooMootaPay
+ * Plugin URI: https://wordpress.org/plugins/woomootapay/
+ * Description: Platform penerima pembayaran otomatis untuk produk, jasa dan apapun.
+ * Author: Fattah
+ * Author URI: https://fattah.id/
  * Version: 1.0.0
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Tested up to: 5.9
  * WC requires at least: 5.7
  * WC tested up to: 6.2
- * Text Domain: moota-gateway
+ * Text Domain: woomootapay
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

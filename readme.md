@@ -1,4 +1,4 @@
-=== mootapay-woocommerce ===
+=== WooMootaPay ===
 Contributors: fattahteknodigital
 Tags: moota, payment, bank-transfer, payment-gateway
 Requires at least: 5.6
@@ -14,7 +14,7 @@ Plugin Untuk Menggunakan Moota Pay Dengan Woocommerce.
 
 Moota Pay Adalah Platform penerima pembayaran otomatis untuk produk, jasa dan apapun.
 
-Plugin mootapay-woocommerce Membantu Anda pengguna woocommerce untuk terhubung dengan moota pay secara cepat, aman dan mudah.
+Plugin WooMootaPay Membantu Anda pengguna woocommerce untuk terhubung dengan moota pay secara cepat, aman dan mudah.
 
 Selengkapnya Tentang [Moota Pay](https://mootapay.com).
 
