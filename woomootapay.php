@@ -6,11 +6,11 @@
  * Author: Moota Pay
  * Author URI: https://mootapay.com/
  * Version: 1.0.0
- * Requires at least: 5.6
+ * Requires at least: 6.0.0
  * Requires PHP: 7.4
- * Tested up to: 5.9
- * WC requires at least: 5.7
- * WC tested up to: 6.2
+ * Tested up to: 6.0.2
+ * WC requires at least: 6.9.0
+ * WC tested up to: 6.9.3
  * Text Domain: mootapay-woocommerce
  */
 
