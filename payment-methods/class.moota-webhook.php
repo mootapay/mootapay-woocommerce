@@ -27,7 +27,7 @@ class Moota_Webhook {
 		) {
 			header("HTTP/1.1 200 OK");
 
-			$http_signature = ! empty( $_SERVER['HTTP_SIGNATURE'] ) ? $_SERVER['HTTP_SIGNATURE'] : null;
+			$http_signature = ! empty( $_SERVER['HTTP_SIGNATURE'] ) ? sanitize_text_field($_SERVER['HTTP_SIGNATURE']) : null;
 			if ( $http_signature && $_SERVER['REQUEST_METHOD'] == 'POST' ) {
 				$log      = '';
 				$response = file_get_contents( 'php://input' );
