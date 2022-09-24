@@ -204,6 +204,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 		 <?php if ( ! empty( $escrow ) ) :
              foreach ( $escrow as $item ) :
                     $escrow_selection = $this->escrow_selection( $item );
+                    $item = wp_kses_post( $item );
                  ?>
                  <li>
                      <label for="bank-transfer-<?php echo $escrow_selection->payment_method_type; ?> va-id-<?php echo $item; ?>">

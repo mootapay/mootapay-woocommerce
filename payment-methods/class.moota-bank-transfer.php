@@ -127,9 +127,9 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		?>
         </table>
         <h3 class="wc-settings-sub-title "
-            id="woocommerce_moota-bank-transfer_bank_account_<?php echo $v['id']; ?>>"><?php echo $v['title']; ?></h3>
+            id="woocommerce_moota-bank-transfer_bank_account_<?php echo $v['id']; ?>>"><?php echo __($v['title'], 'mootapay-woocommerce'); ?></h3>
 		<?php if ( ! empty( $v['description'] ) ) : ?>
-            <p><?php echo $v['description']; ?></p>
+            <p><?php esc_html_e( $v['description'], 'mootapay-woocommerce' ); ?></p>
 		<?php endif; ?>
         <table class="form-table">
 		<?php if ( is_array( $banks ) ) : ?>
