@@ -39,7 +39,7 @@ class Moota_Transaction {
 		$tax = 0;
 
 		if ( $order->get_tax_totals() ) {
-			foreach ($order->get_tax_totals() as $i) {
+			foreach ( $order->get_tax_totals() as $i ) {
 				$tax += $i->amount;
 			}
 			$items[] = [
@@ -51,18 +51,18 @@ class Moota_Transaction {
 			];
 		}
 
-		if ( strlen($start_unique_code) < 2 ) {
-			$start_unique_code = sprintf('%02d', $start_unique_code);
+		if ( strlen( $start_unique_code ) < 2 ) {
+			$start_unique_code = sprintf( '%02d', $start_unique_code );
 		}
 
 		if ( $start_unique_code > $end_unique_code ) {
 			$end_unique_code += 10;
 		}
 
-		$minutes = (int) get_option('woocommerce_hold_stock_minutes');
-		if ( get_option('woocommerce_manage_stock', 'yes') == 'yes' ) {
+		$minutes = (int) get_option( 'woocommerce_hold_stock_minutes' );
+		if ( get_option( 'woocommerce_manage_stock', 'yes' ) == 'yes' ) {
 			if ( $payment_method_type == 'bank_transfer' ) {
-				if ( empty($minutes) || $minutes > 43200 ) {
+				if ( empty( $minutes ) || $minutes > 43200 ) {
 					$minutes = 43200;
 				}
 			} else {
@@ -74,6 +74,9 @@ class Moota_Transaction {
 			$minutes = 1440;
 		}
 
+		$expired_date = date( 'Y-m-d H:i:s', strtotime( "+{$minutes} minutes" ) );
+
+
 		$args = [
 			'invoice_number'                  => $order->get_order_number(),
 			'amount'                          => $order->get_total(),
@@ -84,7 +87,7 @@ class Moota_Transaction {
 			'increase_total_from_unique_code' => 1,
 			'start_unique_code'               => $start_unique_code,
 			'end_unique_code'                 => $end_unique_code,
-			'expired_date'                    => date( 'Y-m-d H:i:s', strtotime( "+{$minutes} minutes" ) ),
+			'expired_date'                    => self::convertDateTime( $expired_date ),
 			'customer'                        => [
 				'name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
 				'email' => $order->get_billing_email(),
@@ -109,9 +112,9 @@ class Moota_Transaction {
 			$order->update_meta_data( "payment_link", $response->data->payment_link );
 
 		} else {
-			if ( isset($response->errors) ) {
-				foreach ($response->errors as $error => $msg ) {
-					wc_add_notice( '<strong>'.$error.'</strong> ' . $msg, 'error' );
+			if ( isset( $response->errors ) ) {
+				foreach ( $response->errors as $error => $msg ) {
+					wc_add_notice( '<strong>' . $error . '</strong> ' . $msg, 'error' );
 				}
 			} else {
 				wc_add_notice( '<strong>Terjadi Masalah Server</strong> Coba beberapa saat lagi', 'error' );
@@ -142,4 +145,15 @@ class Moota_Transaction {
 
 		return apply_filters( 'woocommerce_get_return_url', $return_url, $order );
 	}
+
+	private static function convertDateTime( $date, $format = 'Y-m-d H:i:s' ) {
+		$tz1 = 'UTC';
+		$tz2 = 'Asia/Jakarta'; // UTC +7
+
+		$d = new DateTime( $date, new DateTimeZone( $tz1 ) );
+		$d->setTimeZone( new DateTimeZone( $tz2 ) );
+
+		return $d->format( $format );
+	}
+
 }
