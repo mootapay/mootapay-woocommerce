@@ -129,9 +129,9 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 		?>
 		</table>
 		<h3 class="wc-settings-sub-title "
-		    id="woocommerce_moota-bank-transfer_bank_account_<?php echo $v['id']; ?>>"><?php echo $v['title']; ?></h3>
-		<?php if ( ! empty( $v['description'] ) ) : ?>
-			<p><?php echo $v['description']; ?></p>
+		    id="woocommerce_moota-bank-transfer_bank_account_<?php echo esc_attr($v['id']); ?>>"><?php echo esc_attr($v['title']); ?></h3>
+		<?php if ( ! empty( esc_attr($v['description']) ) ) : ?>
+			<p><?php echo esc_attr($v['description']); ?></p>
 		<?php endif; ?>
 		<table class="form-table">
 		<?php if ( is_array( $escrow ) ) : ?>
@@ -147,9 +147,9 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
 						<fieldset>
 							<legend class="screen-reader-text"><span><?php echo wp_kses_post( $item->label ); ?></span>
 							</legend>
-							<input type="checkbox" name="<?php echo $field_key; ?>[<?php echo $field_key_escrow; ?>]"
-							       id="<?php echo $field_key . '_' . $item->payment_method_id; ?>"
-							       value="<?php echo $item->payment_method_id; ?>" <?php echo $checked ? "checked" : ""; ?>/>
+							<input type="checkbox" name="<?php echo esc_attr($field_key); ?>[<?php echo esc_attr($field_key_escrow); ?>]"
+							       id="<?php echo esc_attr($field_key . '_' . $item->payment_method_id); ?>"
+							       value="<?php echo esc_attr($item->payment_method_id); ?>" <?php echo esc_attr($checked) ? "checked" : ""; ?>/>
 						</fieldset>
 					</td>
 				</tr>
@@ -207,11 +207,11 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
                     $item = wp_kses_post( $item );
                  ?>
                  <li>
-                     <label for="bank-transfer-<?php echo $escrow_selection->payment_method_type; ?> va-id-<?php echo $item; ?>">
-                     <input id="bank-transfer-va-id-<?php echo $item; ?>" name="channels" type="radio"
-                     value="<?php echo $item; ?>">
-                     <span><img width="80" src="<?php echo $escrow_selection->icon;?>" alt="<?php echo $escrow_selection->payment_method_type; ?>"></span>
-                     <span class="moota-bank-account"><?php echo $escrow_selection->name; ?></span>
+                     <label for="bank-transfer-<?php echo esc_attr($escrow_selection->payment_method_type); ?> va-id-<?php echo esc_attr($item); ?>">
+                     <input id="bank-transfer-va-id-<?php echo esc_attr($item); ?>" name="channels" type="radio"
+                     value="<?php echo esc_attr($item); ?>">
+                     <span><img width="80" src="<?php echo esc_attr($escrow_selection->icon);?>" alt="<?php echo esc_attr($escrow_selection->payment_method_type); ?>"></span>
+                     <span class="moota-bank-account"><?php echo esc_attr($escrow_selection->name); ?></span>
                      </label>
                  </li>
              <?php endforeach;
@@ -253,7 +253,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
                <?php if ( $this->settings['toggle_status'] != 'no' ) : ?>
                <tr>
                     <th scope="row">Kode Unik</th>
-                    <td><?php echo $kodeunik?></td>
+                    <td><?php echo esc_attr($kodeunik); ?></td>
                </tr>
                <?php endif;?>
                <tr>
@@ -261,7 +261,7 @@ class WC_Moota_Escrow extends WC_Payment_Gateway {
                    <td><?php echo wc_price($total);?></td>
                </tr>
                <tr>
-                    <td colspan="2" style="text-align: center"><a href="<?php echo $payment_link;?>">Check Status Pembayaran</a></td>
+                    <td colspan="2" style="text-align: center"><a href="<?php echo esc_attr($payment_link);?>">Check Status Pembayaran</a></td>
                </tr>
             </table>
             <?php

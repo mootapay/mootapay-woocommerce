@@ -127,8 +127,8 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		?>
         </table>
         <h3 class="wc-settings-sub-title "
-            id="woocommerce_moota-bank-transfer_bank_account_<?php echo $v['id']; ?>>"><?php echo __($v['title'], 'mootapay-woocommerce'); ?></h3>
-		<?php if ( ! empty( $v['description'] ) ) : ?>
+            id="woocommerce_moota-bank-transfer_bank_account_<?php echo esc_attr($v['id']); ?>>"><?php echo __(esc_attr($v['title']), 'mootapay-woocommerce'); ?></h3>
+		<?php if ( ! empty( esc_html_e($v['description']) ) ) : ?>
             <p><?php esc_html_e( $v['description'], 'mootapay-woocommerce' ); ?></p>
 		<?php endif; ?>
         <table class="form-table">
@@ -145,9 +145,9 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
                         <fieldset>
                             <legend class="screen-reader-text"><span><?php echo wp_kses_post( $item->label ); ?></span>
                             </legend>
-                            <input type="checkbox" name="<?php echo $field_key; ?>[<?php echo $field_key_bank; ?>]"
-                                   id="<?php echo $field_key . '_' . $item->bank_id; ?>"
-                                   value="<?php echo $item->bank_id; ?>" <?php echo $checked ? "checked" : ""; ?>/>
+                            <input type="checkbox" name="<?php echo esc_attr($field_key); ?>[<?php echo esc_attr($field_key_bank); ?>]"
+                                   id="<?php echo esc_attr($field_key) . '_' . esc_attr($item->bank_id); ?>"
+                                   value="<?php echo esc_attr($item->bank_id); ?>" <?php echo esc_attr($checked) ? "checked" : ""; ?>/>
                         </fieldset>
                     </td>
                 </tr>
@@ -204,11 +204,11 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
                     $bank_selection = $this->bank_selection( $item );
                  ?>
                  <li>
-                     <label for="bank-transfer-<?php echo $bank_selection->bank_type; ?> bank-id-<?php echo $item; ?>">
-                     <input id="bank-transfer-bank-id-<?php echo $item; ?>" name="channels" type="radio"
-                     value="<?php echo $item; ?>">
-                     <span><img src="<?php echo $bank_selection->icon;?>" alt="<?php echo $bank_selection->bank_type; ?>"></span>
-                     <span class="moota-bank-account"><?php echo $bank_selection->label; ?> <?php echo $bank_selection->account_number; ?> An. (<?php echo $bank_selection->atas_nama; ?>)</span>
+                     <label for="bank-transfer-<?php echo esc_attr($bank_selection->bank_type); ?> bank-id-<?php echo esc_attr($item); ?>">
+                     <input id="bank-transfer-bank-id-<?php echo esc_attr($item); ?>" name="channels" type="radio"
+                     value="<?php echo esc_attr($item); ?>">
+                     <span><img src="<?php echo esc_attr($bank_selection->icon);?>" alt="<?php echo esc_attr($bank_selection->bank_type); ?>"></span>
+                     <span class="moota-bank-account"><?php echo esc_attr($bank_selection->label); ?> <?php echo esc_attr($bank_selection->account_number); ?> An. (<?php echo esc_attr($bank_selection->atas_nama); ?>)</span>
                      </label>
                  </li>
              <?php endforeach;
@@ -217,7 +217,7 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
 		 <?php
 		 $description = $this->get_description();
          if ( $description ) {
-             echo wpautop( wptexturize( $description ) ); // @codingStandardsIgnoreLine.
+             echo esc_attr(wpautop( wptexturize( $description ) )); // @codingStandardsIgnoreLine.
          }
 	}
 
@@ -250,7 +250,7 @@ class WC_Moota_Bank_Transfer extends WC_Payment_Gateway {
                <?php if ( $this->settings['toggle_status'] != 'no' ) : ?>
                <tr>
                     <th scope="row">Kode Unik</th>
-                    <td><?php echo $kodeunik?></td>
+                    <td><?php echo esc_attr($kodeunik); ?></td>
                </tr>
                <?php endif;?>
                <tr>
