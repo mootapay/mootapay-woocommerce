@@ -19,6 +19,11 @@ Plugin MootaPay For Woocommerce Membantu Anda pengguna woocommerce untuk terhubu
 Selengkapnya Tentang [Moota Pay](https://mootapay.com).
 
 == Changelog ==
+= 1.0.3 =
+Add Screenshoot
+
+= 1.0.2 =
+Fix Github Action (pipelines)
 
 = 1.0.1 =
 * Fix Tax Calculation
